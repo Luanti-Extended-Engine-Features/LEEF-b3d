@@ -1,12 +1,61 @@
+
+--this reader has been heavily modified to implement additional needed features.
+--implementations include:
+
+--mtul.b3d.read_model()
+--ignore_chunks parameter,
+--node.parent,
+--node.path
+--b3d.node_paths
+
 -- Localize globals
 local read_int, read_single = mtul.binary.read_int, mtul.binary.read_single
 --+ Reads a single BB3D chunk from a stream
 --+ Doing `assert(stream:read(1) == nil)` afterwards is recommended
 --+ See `b3d_specification.txt` as well as https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp
 --> B3D model
-function mtul.b3d.read(stream)
+
+--reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
+function mtul.b3d.read_model(modelname, node_only)
+	local path = mtul.media_paths[modelname]
+	local out
+	if path then
+		local ignored
+		if node_only then
+			ignored = {"TEXS", "BRUS", "BONE", "MESH"}
+		end
+		local stream = io.open(path, "rb")
+		if not stream then return end --if the file wasn't found we probably shouldnt just assert.
+		out = mtul.b3d.read_from_stream(stream, ignored)
+		assert(stream:read(1)==nil, "MTUL B3D: unknown error, EOF not reached")
+		stream:close()
+	end
+	return out
+end
+
+--"ignore_chunks" is a list of chunks to ignore when reading- as for various applications it may be uncessary or otherwise redundant
+--note that this does not increase runtime spead as chunks still must be read before we know what they are (currently)
+--chunk types: "BB3D", "TEXS", "BRUS", "TRIS", "MESH", "BONE", "ANIM", "KEYS", "VRTS", "NODE"
+--this specifies what chunks can be found inside eachother
+--MESH subtypes: VRTS, TRIS
+--BB3D subtypes: TEXS, NODE
+--NODE subtypes: KEYS, ANIM, NODE, BONE, MESH
+
+--node_paths is a table of nodes indexed by a table containing a hierarchal list of nodes to get to that node (including itself).
+--this is ideal if you need to, say, solve for the transform of a node- instead of iterating 100s of times to get every parent node
+--it's all provided for you. Note that it's from highest to lowest, where lowest of course is the current node, the last element.
+
+function mtul.b3d.read_from_stream(stream, ignore_chunks)
 	local left = 8
 
+	local ignored = {}
+	if ignore_chunks then
+		for i, v in pairs(ignore_chunks) do
+			ignored[v] = true
+		end
+		assert(not ignored.BB3D, "reader cannot not ignore entire model. (ignore_chunks contained BB3D)")
+		assert(not ignored.NODE, "reader cannot not ignore entire model. (ignore_chunks contained NODE)")
+	end
 	local function byte()
 		left = left - 1
 		return assert(stream:read(1):byte())
@@ -79,6 +128,10 @@ function mtul.b3d.read(stream)
 		end
 		return left ~= 0
 	end
+
+	local node_chunk_types = {
+
+	}
 
 	local chunk
 	local chunks = {
@@ -220,7 +273,9 @@ function mtul.b3d.read(stream)
 			node.name = string()
 			node.position = vector3()
 			node.scale = vector3()
-			node.keys = {}
+			if not ignored.KEYS then
+				node.keys = {}
+			end
 			node.rotation = quaternion()
 			node.children = {}
 			local node_type
@@ -228,25 +283,30 @@ function mtul.b3d.read(stream)
 			-- Order is not validated; double occurrences of mutually exclusive node def are
 			while content() do
 				local elem, type = chunk()
-				if type == "MESH" then
-					assert(not node_type)
-					node_type = "mesh"
-					node.mesh = elem
-				elseif type == "BONE" then
-					assert(not node_type)
-					node_type = "bone"
-					node.bone = elem
-				elseif type == "KEYS" then
-					mtul.tbl.append(node.keys, elem)
-				elseif type == "NODE" then
-					table.insert(node.children, elem)
-				elseif type == "ANIM" then
-					node.animation = elem
-				else
-					assert(not node_type)
-					node_type = "pivot"
+				if not ignored[type] then
+					if type == "MESH" then
+						assert(not node_type)
+						node_type = "mesh"
+						node.mesh = elem
+					elseif type == "BONE" then
+						assert(not node_type)
+						node_type = "bone"
+						node.bone = elem
+					elseif type == "KEYS" then
+						mtul.tbl.append(node.keys, elem)
+					elseif type == "NODE" then
+						elem.parent = node
+						table.insert(node.children, elem)
+					elseif type == "ANIM" then
+						node.animation = elem
+					else
+						assert(not node_type)
+						node_type = "pivot"
+					end
 				end
 			end
+			--added because ignored nodes may unintentionally obfuscate the type of node- which could be necessary for finding bone "paths"
+			node.type = node_type
 			-- Ensure frames are sorted ascendingly
 			table.sort(node.keys, function(a, b)
 				assert(a.frame ~= b.frame, "duplicate frame")
@@ -261,18 +321,20 @@ function mtul.b3d.read(stream)
 					major = math.floor(version / 100),
 					minor = version % 100,
 				},
-				textures = {},
-				brushes = {}
 			}
+			if not ignored.TEXS then self.textures = {} end
+			if not ignored.BRUS then self.brushes = {} end
 			assert(self.version.major <= 2, "unsupported version: " .. self.version.major)
 			while content() do
 				local field, type = chunk{TEXS = true, BRUS = true, NODE = true}
-				if type == "TEXS" then
-					mtul.tbl.append(self.textures, field)
-				elseif type == "BRUS" then
-					mtul.tbl.append(self.brushes, field)
-				else
-					self.node = field
+				if not ignored[type] then
+					if type == "TEXS" then
+						mtul.tbl.append(self.textures, field)
+					elseif type == "BRUS" then
+						mtul.tbl.append(self.brushes, field)
+					else
+						self.node = field
+					end
 				end
 			end
 			return self
@@ -297,6 +359,32 @@ function mtul.b3d.read(stream)
 		return res, type
 	end
 
+	--due to the nature of how the b3d is read, paths have to be built by recursively iterating the table in post.
+	--luckily most of the ground work is layed out for us already.
+
+	--also, Fatal here: for the sake of my reputation (which is nonexistent), typically I wouldn't nest these functions
+	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen. (Not that its *always* a bad idea, but unless you're baking in parameters it's sort of awful)
+	local copy_path = mtul.table and mtul.table.shallow_copy or function(tbl)
+		local new_table = {}
+		for i, v in pairs(tbl) do
+			new_table[i] = v
+		end
+		return new_table
+	end
+	local function make_paths(node, path, node_paths)
+		local new_path = copy_path(path)
+		table.insert(new_path, node)
+		node_paths[new_path] = node --this will create a list of paths
+		for i, next_node in pairs(node.children) do
+			make_paths(next_node, new_path, node_paths)
+		end
+		node.path = new_path
+	end
+
 	local self = chunk{BB3D = true}
-	return setmetatable(self, mtul.b3d)
+	self.node_paths = {}
+	make_paths(self.node, {}, self.node_paths)
+
+	--b3d metatable unimplemented
+	return setmetatable(self, mtul._b3d_metatable or {})
 end

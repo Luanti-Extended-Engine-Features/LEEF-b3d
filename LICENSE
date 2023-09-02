@@ -1,15 +1,8 @@
-WARNING, THIS LICENSE DOES NOT AND IS NOT INTENDED TO APPLY FOR FILES WHICH
-HAVE A "License.md", "LICENSE", "License.txt" "LICENSE.txt" OR ANY FILE NAMED
-AFTER THE WORD "license" IN THEIR SHARED DIRECTORY; 
+"/modlib/" sub directory: Copright (c) respective owner(s), see the directory
+for it's respective license (License.txt). Once again note that the "/modlib/"
+directory in this case is explicitly exempt from the following MIT License.
 
-IF A FILE IS IN THE SAME DIRECTORY AS A FILE NAMED ANY FORM OF THE WORD LICENSE 
-IN ANY COMBINATION WITH OR WITHOUT AN EXTENSION, THEN SOLEY THAT LICENSE IS TO
-APPLY TO THOSE FILES. 
-
-IF A DIRECTORY DOES NOT CONTAIN A LICENSE, THE FOLLOWING LICENSE AGREEMENT APPLIES.
-
-TO BE EXPLICIT, THE "modlib" DIRECTORY HAS IT'S OWN DISTINCT LICENSE AND COPYRIGHT
-HOLDER. Please see it's own "License.txt"
+for all other files outside of "/modlib/" directory:
 
 MIT License
 
