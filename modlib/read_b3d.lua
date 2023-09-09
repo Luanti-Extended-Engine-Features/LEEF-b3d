@@ -17,19 +17,18 @@ local read_int, read_single = mtul.binary.read_int, mtul.binary.read_single
 
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
 function mtul.b3d.read_model(modelname, node_only)
-	local path = mtul.media_paths[modelname]
+	assert(modelname, "no modelname provided")
+	local path = assert(mtul.media_paths[modelname], "no model found by the name "..modelname.."'")
 	local out
-	if path then
-		local ignored
-		if node_only then
-			ignored = {"TEXS", "BRUS", "BONE", "MESH"}
-		end
-		local stream = io.open(path, "rb")
-		if not stream then return end --if the file wasn't found we probably shouldnt just assert.
-		out = mtul.b3d.read_from_stream(stream, ignored)
-		assert(stream:read(1)==nil, "MTUL B3D: unknown error, EOF not reached")
-		stream:close()
+	local ignored
+	if node_only then
+		ignored = {"TEXS", "BRUS", "BONE", "MESH"}
 	end
+	local stream = io.open(path, "rb")
+	if not stream then return end --if the file wasn't found we probably shouldnt just assert.
+	out = mtul.b3d.read_from_stream(stream, ignored)
+	assert(stream:read(1)==nil, "MTUL B3D: unknown error, EOF not reached")
+	stream:close()
 	return out
 end
 
@@ -45,6 +44,7 @@ end
 --this is ideal if you need to, say, solve for the transform of a node- instead of iterating 100s of times to get every parent node
 --it's all provided for you. Note that it's from highest to lowest, where lowest of course is the current node, the last element.
 
+--made originally by appgurueu
 function mtul.b3d.read_from_stream(stream, ignore_chunks)
 	local left = 8
 
@@ -283,30 +283,36 @@ function mtul.b3d.read_from_stream(stream, ignore_chunks)
 			-- Order is not validated; double occurrences of mutually exclusive node def are
 			while content() do
 				local elem, type = chunk()
-				if not ignored[type] then
-					if type == "MESH" then
-						assert(not node_type)
-						node_type = "mesh"
+				if type == "MESH" then
+					assert(not node_type)
+					node_type = "mesh"
+					if not ignored[type] then
 						node.mesh = elem
-					elseif type == "BONE" then
-						assert(not node_type)
-						node_type = "bone"
-						node.bone = elem
-					elseif type == "KEYS" then
-						mtul.tbl.append(node.keys, elem)
-					elseif type == "NODE" then
-						elem.parent = node
-						table.insert(node.children, elem)
-					elseif type == "ANIM" then
-						node.animation = elem
-					else
-						assert(not node_type)
-						node_type = "pivot"
 					end
+				elseif type == "BONE" then
+					assert(not node_type)
+					node_type = "bone"
+					if not ignored[type] then
+						node.bone = elem
+					end
+				elseif type == "KEYS" then
+					if not ignored[type] then
+						mtul.tbl.append(node.keys, elem)
+					end
+				elseif type == "NODE" then
+					elem.parent = node
+					table.insert(node.children, elem)
+				elseif type == "ANIM" then
+					if not ignored[type] then
+						node.animation = elem
+					end
+				else
+					assert(not node_type, "Appgurueu decided to not put actual messages, so I'm not sure, but your .b3d file is fscked up lol. I dont even think this assert is needed.")
+					node_type = "pivot"
 				end
 			end
-			--added because ignored nodes may unintentionally obfuscate the type of node- which could be necessary for finding bone "paths"
-			node.type = node_type
+			--added because ignored nodes may obfuscate the type of node- which could be necessary for finding bone "paths"
+			node.type = node_type or "pivot"
 			-- Ensure frames are sorted ascendingly
 			table.sort(node.keys, function(a, b)
 				assert(a.frame ~= b.frame, "duplicate frame")
@@ -363,7 +369,7 @@ function mtul.b3d.read_from_stream(stream, ignore_chunks)
 	--luckily most of the ground work is layed out for us already.
 
 	--also, Fatal here: for the sake of my reputation (which is nonexistent), typically I wouldn't nest these functions
-	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen. (Not that its *always* a bad idea, but unless you're baking in parameters it's sort of awful)
+	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen. (Not that its *always* a bad idea, but unless you're baking in parameters it's sort of useless and potentially wasteful)
 	local copy_path = mtul.table and mtul.table.shallow_copy or function(tbl)
 		local new_table = {}
 		for i, v in pairs(tbl) do
@@ -383,6 +389,7 @@ function mtul.b3d.read_from_stream(stream, ignore_chunks)
 
 	local self = chunk{BB3D = true}
 	self.node_paths = {}
+	self.excluded_chunks = ignore_chunks and table.copy(ignore_chunks) or {}
 	make_paths(self.node, {}, self.node_paths)
 
 	--b3d metatable unimplemented

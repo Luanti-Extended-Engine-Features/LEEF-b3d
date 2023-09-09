@@ -21,11 +21,16 @@ dofile(modpath.."/modlib/write_b3d.lua") --this is untested, could be very broke
 if mtul.loaded_modules.cpml then
    mtul.b3d_nodes = dofile(modpath.."/nodes.lua")
    mtul.loaded_modules.b3d_nodes = true
+   mtul.b3d_nodes.loaded = true
 else
    mtul.b3d_nodes = {}
    setmetatable(mtul.b3d_nodes, {
-      __index = function()
-         error("MTUL-CPML not present, b3d_nodes module inaccessible.")
+      __index = function(_, k)
+         if k ~= "loaded" then
+            error("MTUL-CPML not present, b3d_nodes module inaccessible.")
+         else
+            return false
+         end
       end
    })
 end
