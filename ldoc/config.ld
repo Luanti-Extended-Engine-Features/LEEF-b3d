@@ -6,4 +6,4 @@ backtick_references=false
 file = {
    "../",
 }
-dir='../doc'
+dir='../docs'
