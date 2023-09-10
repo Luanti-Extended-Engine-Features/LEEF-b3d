@@ -14,4 +14,7 @@ features:
 * solve the global rotation of a node
 * solve the global transformation of a node (mat4)
 
+todo: 
+* allow use of `get_node_by_name()` without CPML. (move to b3d_reader or set alias?)
+
 Without Appgurue's Modlib this would not be possible, and while I personally have my issues with it, it still provides useful tools, and it's worth looking into for libraries.
