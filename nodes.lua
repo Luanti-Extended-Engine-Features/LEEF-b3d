@@ -1,10 +1,29 @@
+--- allows you to get information about nodes (bones or meshes) within a b3d table (generated with `b3d_reader`)
+--- located in `mtul.b3d_nodes`.
+--- WARNING! mtul-cpml must be present for this module to run!
+--@module b3d_nodes
+--@warning for this module mtul_cpml is required, trying to use these functions without mtul_cpml ran will error.
+
 --gets node by name
 --this breaks if you have multiple nodes with the same name.
 --if there are meshes that go by the same name, you can set "bone" param to true.
 local b3d_nodes = {}
+local mat4 = mtul.math.mat4
+local quat = mtul.math.quat
+
+--- get a node by it's name
+-- @function get_node_by_name
+-- @param self the b3d table (from b3d_reader)
+-- @param node_name the name of the node to fine
+-- @param is_bone (optional) bool to indicate wether the node is a bone or not (incase there's a mesh named the same thing). False will only return meshes and pivots, true will only return bones. Nil will return any.
+-- @return node (from b3d table, documentation needed)
 function b3d_nodes.get_node_by_name(self, node_name, is_bone)
     for i, this_node in pairs(self.node_paths) do
-        if ( (not is_bone) or (this_node.type=="bone") ) and (this_node.name == node_name) then
+        if is_bone ~= nil then
+            if (this_node.name == node_name) and ( ((this_node.type == "bone") and is_bone) or (this_node.type ~= "bone" and not is_bone) ) then
+                return this_node
+            end
+        elseif (this_node.name == node_name) then
             return this_node
         end
     end
@@ -19,7 +38,19 @@ local interpolate = function(a, b, ratio)
     end
     return out
 end
-function b3d_nodes.get_animated_local_transform(node, target_frame)
+--keep in mind that this returns *raw* info, other then vectorizing quaternions (as slerp has to be performed to interpolate).
+--further, quaternions need to have their w inverted.
+
+--- get the local "TRS" (translation, rotation, scale) of a bone in animation. This is used for global transformation calculations.
+--- quaternion is returned as a string indexed table because it needs to be a cpml object to be interpolated, also has to be usable anyway.
+-- @function get_animated_local_trs
+-- @param node table, the node from within a b3d table to read (as outputed by b3d_reader).
+-- @param target_frame float, the frame to find the TRS in, can be inbetween frames/keyframes (of course).
+-- @return `position` ordered table: {x, y, z}
+-- @return `rotation` quat from `mtul_cpml`: (example) {w=0,x=0,y=0,z=1}
+-- @return `scale` ordered table: {x, y, z}
+--outputs need cleaning up.
+function b3d_nodes.get_animated_local_trs(node, target_frame)
     local frames = node.keys
     local key_index_before = 0 --index of the key before the target_frame.
     for i, key in ipairs(frames) do
@@ -44,31 +75,36 @@ function b3d_nodes.get_animated_local_transform(node, target_frame)
         local ratio = (f1-target_frame)/(f1-f2) --find the interpolation ratio
         return
             interpolate(frame_before_tbl.position, frame_after_tbl.position, ratio),
-            interpolate(frame_before_tbl.rotation, frame_after_tbl.rotation, ratio),
+            quat.new(unpack(frame_before_tbl.rotation)):slerp(quat.new(unpack(frame_after_tbl.rotation)), ratio),
             interpolate(frame_before_tbl.scale, frame_after_tbl.scale, ratio)
     else
         return
             table.copy(frame_before_tbl.position),
-            table.copy(frame_before_tbl.rotation),
+            quat.new(unpack(frame_before_tbl.rotation)),
             table.copy(frame_before_tbl.scale)
     end
 end
-local mat4 = mtul.math.mat4
-local quat = mtul.math.quat
 --param 3 (outputs) is either "rotation" or "transform"- determines what's calculated. You can use this if you dont want uncessary calculations. If nil outputs both
+
+--- get a node's global mat4 transform and rotation.
+-- @function get_node_global_transform
+-- @param node table, the node from within a b3d table to read (as outputed by `b3d_reader`).
+-- @param frame float, the frame to find the transform and rotation in.
+-- @param outputs (optional) string, either "rotation" or "transform". Set to nil to return both.
+-- @return `global_transform`, a matrix 4x4, note that CPML's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `mtul_cpml` docs)
+-- @return `rotation quat`, the quaternion rotation in global space. (cannot be assumed to be normalized, this uses raw interpolated data from the b3d reader)
 function b3d_nodes.get_node_global_transform(node, frame, outputs)
     local global_transform
     local rotation
     for i, current_node in pairs(node.path) do
         local pos_vec, rot_vec, scl_vec =  b3d_nodes.get_animated_local_transform(current_node, frame)
-
+        rot_vec.w = -rot_vec.w --b3d rotates the opposite way around the axis (I guess)
         --find the transform
-
         if not (outputs and outputs ~= "transform") then
             --rot_vec = {rot_vec[2], rot_vec[3], rot_vec[4], rot_vec[1]}
             local local_transform = mat4.identity()
-            local_transform = local_transform:translate(local_transform, {-pos_vec[1], pos_vec[2], pos_vec[3]})--not sure why x has to be inverted,
-            local_transform = local_transform*(mat4.from_quaternion(quat.new(-rot_vec[1], rot_vec[2], rot_vec[3], rot_vec[4]):normalize())) --W has to be inverted
+            local_transform = local_transform:translate(local_transform, pos_vec)
+            local_transform = local_transform*(mat4.from_quaternion(rot_vec:normalize())) --W has to be inverted
 
             --for some reason the scaling has to be broken up, I can't be bothered to figure out why after the time I've spent trying.
             local identity = mat4.identity()
@@ -87,20 +123,26 @@ function b3d_nodes.get_node_global_transform(node, frame, outputs)
         if not (outputs and outputs ~= "rotation") then
             --find the rotation. Please note that modlib's code (in the b3d reader from mtul-b3d-standalone) converts xyzw to wxyz when reading b3ds
             if not rotation then
-                rotation = quat.new(-rot_vec[1], rot_vec[2], rot_vec[3], rot_vec[4])
+                rotation = rot_vec
             else
-                rotation = rotation*quat.new(-rot_vec[1], rot_vec[2], rot_vec[3], rot_vec[4])
+                rotation = rotation*rot_vec
             end
         end
-    end
-    --x needs to be inverted (as mentioned earlier.)
-    if global_transform then
-        global_transform[13] = -global_transform[13]
     end
     return global_transform, rotation
 end
 
 --Returns X, Y, Z. is_bone is optional, if "node" is the name of a node (and not the node table), parameter 1 (self) and parameter 3 (is_bone) is used to find it.
+
+--- find the position of a node in global model space.
+--@function get_node_global_position
+--@param self b3d table, (optional if node is a node table and not name)
+--@param node string or table, either the node from b3d table or a the name of the node to find.
+--@param is_bone (optional) if node is string, this is used to find it (see get_node_by_name)
+--@param frame the frame to find the global position of the node at.
+--@return `x`
+--@return `y`
+--@return `z`
 function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
     assert(self or not type(node)=="string")
     if type(node) == "string" then
@@ -109,7 +151,13 @@ function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
     local transform = b3d_nodes.get_node_global_transform(node, frame, "transform")
     return transform[13], transform[14], transform[15]
 end
---exactly like get_node_global_position, but it returns a vec3 quaternion.
+--- find the global rotation of a node in model space.
+--@function get_node_rotation
+--@param self b3d table, (optional if node is a node table and not name)
+--@param node string or table, either the node from b3d table or a the name of the node to find.
+--@param is_bone (optional) if node is string, this is used to find it (see get_node_by_name)
+--@param frame the frame to find the global rotation of the node at.
+--@return `rotation` quaternion rotation of the node (may not be normalized)
 function b3d_nodes.get_node_rotation(self, node, is_bone, frame)
     assert(self or not type(node)=="string")
     if type(node) == "string" then

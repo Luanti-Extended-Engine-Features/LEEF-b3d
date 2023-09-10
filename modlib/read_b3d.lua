@@ -9,15 +9,23 @@
 --b3d.node_paths
 
 -- Localize globals
+
+--- parse .b3d files into a lua table.
+--- located in `mtul.b3d_reader`.
+--@module b3d_reader
+
 local read_int, read_single = mtul.binary.read_int, mtul.binary.read_single
---+ Reads a single BB3D chunk from a stream
---+ Doing `assert(stream:read(1) == nil)` afterwards is recommended
---+ See `b3d_specification.txt` as well as https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp
---> B3D model
 
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
-function mtul.b3d.read_model(modelname, node_only)
+
+--- read b3d models by their name. This simplifies read_from_stream.
+-- @function read_model
+-- @param modelname string, the name of model you are trying to read.
+-- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
+-- @return b3d table (documentation needed!)
+function mtul.b3d_reader.read_model(modelname, node_only)
 	assert(modelname, "no modelname provided")
+	-- @todo remove core dependancy on
 	local path = assert(mtul.media_paths[modelname], "no model found by the name "..modelname.."'")
 	local out
 	local ignored
@@ -26,8 +34,8 @@ function mtul.b3d.read_model(modelname, node_only)
 	end
 	local stream = io.open(path, "rb")
 	if not stream then return end --if the file wasn't found we probably shouldnt just assert.
-	out = mtul.b3d.read_from_stream(stream, ignored)
-	assert(stream:read(1)==nil, "MTUL B3D: unknown error, EOF not reached")
+	out = mtul.b3d_reader.read_from_stream(stream, ignored)
+	assert(stream:read(1)==nil, "MTUL b3d_reader: unknown error, EOF not reached")
 	stream:close()
 	return out
 end
@@ -45,7 +53,27 @@ end
 --it's all provided for you. Note that it's from highest to lowest, where lowest of course is the current node, the last element.
 
 --made originally by appgurueu
-function mtul.b3d.read_from_stream(stream, ignore_chunks)
+-- See `b3d_specification.txt` as well as https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp
+
+--- read directly from file
+-- @function read_from_stream
+-- @param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
+-- @param ignore_chunks a list of chunks to be ignored (documentation needed)
+-- @return b3d table (documentation needed!)
+
+--- an unordered list of the following string chunks.
+--- "NODE" and "BB3D" are ommitted as they are not allowed.
+-- @field 1 "TEXS" texture information
+-- @field 2 "BRUS" brushes (materials)
+-- @field 3 "MESH" (sub-chunks of "MESH" include "VERTS" & "TRIS")
+-- @field 4 "TRIS" sets of triangles
+-- @field 5 "VRTS" vertices
+-- @field 6 "BONE" node vertex weights
+-- @field 7 "ANIM" animation information
+-- @field 8 "KEYS" keyframes
+-- @table ignore_chunks
+
+function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
 
 	local ignored = {}

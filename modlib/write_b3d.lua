@@ -1,3 +1,4 @@
+
 -- Writer
 local write_int, write_single = mtul.binary.write_int, mtul.binary.write_single
 local string_char = string.char
