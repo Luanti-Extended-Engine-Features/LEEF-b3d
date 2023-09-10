@@ -1,6 +1,6 @@
 # MTUL-b3d-standalone
 a b3d library that use's [Appgurue's work](https://github.com/appgurueu/modlib), a b3d reader, and expands it's usefulness into node reading, global transformation solving, 
-and more- all in one package. Online documentation can be found [here](https://minetest-unification-library.github.io/MTUL-b3d-standalone/). 
+and more- mostly in one package. Online documentation can be found [here](https://minetest-unification-library.github.io/MTUL-b3d-standalone/). 
 
 dependencies 
 * MTUL-core: provides binary reading (potential rename)
