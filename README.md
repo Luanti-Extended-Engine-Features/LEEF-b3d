@@ -10,4 +10,4 @@ features:
 * solve the global rotation of a node
 * solve the global transformation of a node (mat4)
 
-Without Appgurue's Modlib this would not be possible, and while I personally have my issues with it, it still provides useful tools, (as much of a back handed compliment that may sound like)
+Without Appgurue's Modlib this would not be possible, and while I personally have my issues with it, it still provides useful tools, and it's worth looking into for libraries.
