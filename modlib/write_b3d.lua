@@ -34,7 +34,7 @@ local function write_rope(self)
 	end
 
 	local function float(val)
-		write_single(byte, mtul.math.fround(val))
+		write_single(byte, mtul.binary.fround(val))
 	end
 
 	local function float_array(arr, len)

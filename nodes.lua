@@ -121,7 +121,6 @@ function b3d_nodes.get_node_global_transform(node, frame, outputs)
         --find the rotation
 
         if not (outputs and outputs ~= "rotation") then
-            --find the rotation. Please note that modlib's code (in the b3d reader from mtul-b3d-standalone) converts xyzw to wxyz when reading b3ds
             if not rotation then
                 rotation = rot_vec
             else
@@ -138,7 +137,7 @@ end
 --@function get_node_global_position
 --@param self b3d table, (optional if node is a node table and not name)
 --@param node string or table, either the node from b3d table or a the name of the node to find.
---@param is_bone (optional) if node is string, this is used to find it (see get_node_by_name)
+--@param is_bone (optional) if node is string, this is used to find it (see `get_node_by_name`)
 --@param frame the frame to find the global position of the node at.
 --@return `x`
 --@return `y`
@@ -155,7 +154,7 @@ end
 --@function get_node_rotation
 --@param self b3d table, (optional if node is a node table and not name)
 --@param node string or table, either the node from b3d table or a the name of the node to find.
---@param is_bone (optional) if node is string, this is used to find it (see get_node_by_name)
+--@param is_bone (optional) if node is string, this is used to find it (see `get_node_by_name`)
 --@param frame the frame to find the global rotation of the node at.
 --@return `rotation` quaternion rotation of the node (may not be normalized)
 function b3d_nodes.get_node_rotation(self, node, is_bone, frame)
