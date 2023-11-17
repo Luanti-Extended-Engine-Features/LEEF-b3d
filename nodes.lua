@@ -27,7 +27,8 @@ function b3d_nodes.get_node_by_name(self, node_name, is_bone)
             return this_node
         end
     end
-    error("MTUL-b3d, b3d_nodes: no node found by the name '"..tostring(node_name).."'")
+    --don't know why I'd ever just not return nil?
+    --error("MTUL-b3d, b3d_nodes: no node found by the name '"..tostring(node_name).."'")
 end
 
 --non-methods:
@@ -51,6 +52,7 @@ end
 -- @return `scale` ordered table: {x, y, z}
 --outputs need cleaning up.
 function b3d_nodes.get_animated_local_trs(node, target_frame)
+    assert(target_frame, "no frame specified for TRS calculations")
     local frames = node.keys
     local key_index_before = 0 --index of the key before the target_frame.
     for i, key in ipairs(frames) do
@@ -97,7 +99,7 @@ function b3d_nodes.get_node_global_transform(node, frame, outputs)
     local global_transform
     local rotation
     for i, current_node in pairs(node.path) do
-        local pos_vec, rot_vec, scl_vec =  b3d_nodes.get_animated_local_transform(current_node, frame)
+        local pos_vec, rot_vec, scl_vec =  b3d_nodes.get_animated_local_trs(current_node, frame)
         rot_vec.w = -rot_vec.w --b3d rotates the opposite way around the axis (I guess)
         --find the transform
         if not (outputs and outputs ~= "transform") then
@@ -144,6 +146,8 @@ end
 --@return `z`
 function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
     assert(self or not type(node)=="string")
+    assert(node, "cannot get position of a nil node")
+    assert(frame, "no frame specified!")
     if type(node) == "string" then
         node = b3d_nodes.get_node_by_name(self, node, is_bone)
     end
@@ -159,6 +163,8 @@ end
 --@return `rotation` quaternion rotation of the node (may not be normalized)
 function b3d_nodes.get_node_rotation(self, node, is_bone, frame)
     assert(self or not type(node)=="string")
+    assert(node, "cannot get rotation of a nil node")
+    assert(frame, "no frame specified!")
     if type(node) == "string" then
         node = b3d_nodes.get_node_by_name(self, node, is_bone)
     end

@@ -335,7 +335,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 						node.animation = elem
 					end
 				else
-					assert(not node_type, "Appgurueu decided to not put actual messages, so I'm not sure, but your .b3d file is fscked up lol. I dont even think this assert is needed.")
+					assert(not node_type, "Appgurueu decided to not put actual comments, so I'm not sure, but your .b3d file is fscked up lol. I dont even think this assert is needed.")
 					node_type = "pivot"
 				end
 			end
@@ -385,7 +385,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 		local parent_left
 		left, parent_left = new_left, left
 		if possible_chunks and not possible_chunks[type] then
-			error("expected one of " .. table.concat(mtul.tbl.keys(possible_chunks), ", ") .. ", found " .. type)
+			error("expected one of " .. table.concat(mtul.tbl.keys(possible_chunks), ", ") .. ", found " .. type .. ". This is likely exporter error.")
 		end
 		local res = assert(chunks[type])()
 		assert(left == 0)
@@ -397,7 +397,8 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	--luckily most of the ground work is layed out for us already.
 
 	--also, Fatal here: for the sake of my reputation (which is nonexistent), typically I wouldn't nest these functions
-	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen. (Not that its *always* a bad idea, but unless you're baking in parameters it's sort of useless and potentially wasteful)
+	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen.
+	--(Not that its *always* a bad idea, but unless you're baking in parameters it's sort of useless and potentially wasteful)
 	local copy_path = mtul.table and mtul.table.shallow_copy or function(tbl)
 		local new_table = {}
 		for i, v in pairs(tbl) do
@@ -418,8 +419,12 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local self = chunk{BB3D = true}
 	self.node_paths = {}
 	self.excluded_chunks = ignore_chunks and table.copy(ignore_chunks) or {}
+	assert(self.node, "no root node - model improperly exported. If using blender, ensure all objects are selected before exporting.")
 	make_paths(self.node, {}, self.node_paths)
 
 	--b3d metatable unimplemented
 	return setmetatable(self, mtul._b3d_metatable or {})
 end
+
+--- b3d table
+-- @field node_paths
