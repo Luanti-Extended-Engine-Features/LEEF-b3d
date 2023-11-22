@@ -32,13 +32,6 @@ function b3d_nodes.get_node_by_name(self, node_name, is_bone)
 end
 
 --non-methods:
-local interpolate = function(a, b, ratio)
-    local out = {}
-    for i, v in pairs(a) do
-        out[i] = a[i]-((a[i]-b[i])*ratio)
-    end
-    return out
-end
 --keep in mind that this returns *raw* info, other then vectorizing quaternions (as slerp has to be performed to interpolate).
 --further, quaternions need to have their w inverted.
 
@@ -51,6 +44,13 @@ end
 -- @return `rotation` quat from `mtul_cpml`: (example) {w=0,x=0,y=0,z=1}
 -- @return `scale` ordered table: {x, y, z}
 --outputs need cleaning up.
+local interpolate = function(a, b, ratio)
+    local out = {}
+    for i, v in pairs(a) do
+        out[i] = a[i]-((a[i]-b[i])*ratio)
+    end
+    return out
+end
 function b3d_nodes.get_animated_local_trs(node, target_frame)
     assert(target_frame, "no frame specified for TRS calculations")
     local frames = node.keys
