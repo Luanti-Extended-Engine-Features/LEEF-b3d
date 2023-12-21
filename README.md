@@ -17,5 +17,6 @@ features:
 todo:
 * allow use of `get_node_by_name()` without CPML. (move to b3d_reader or set alias?)
 * document b3d table contents (I already wrote most of the documentation in modlib's wiki...)
+* finish b3d writer (NOTE: must offset "frame" by +1 as the reader is modified to match irrlicht)
 
 Without Appgurue's Modlib this would not be possible, and while I personally have my issues with it, it still provides useful tools, and it's worth looking into for libraries.

@@ -56,8 +56,8 @@ function b3d_nodes.get_animated_local_trs(node, target_frame)
     local frames = node.keys
     local key_index_before = 0 --index of the key before the target_frame.
     for i, key in ipairs(frames) do
-        --pick the closest frame we find that's less then the target
-        if key.frame < target_frame then
+        --pick the closest frame we find that's less then the target. Also allow it to pick itself if this is an option.
+        if (key.frame <= target_frame) then
             key_index_before = i
         else
             break --we've reached the end of our possible frames to use.

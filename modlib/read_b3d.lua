@@ -275,7 +275,8 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			}
 			while content() do
 				local frame = {}
-				frame.frame = int()
+				--minetest uses a zero indexed frame system, so for consistency, we offset it by 1
+				frame.frame = int()-1
 				if position then
 					frame.position = vector3()
 				end
