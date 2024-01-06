@@ -15,7 +15,20 @@
 --@module b3d_reader
 
 local read_int, read_single = mtul.binary.read_int, mtul.binary.read_single
-
+local function tbl_append(table, other_table)
+	local length = #table
+	for index, value in ipairs(other_table) do
+		table[length + index] = value
+	end
+	return table
+end
+local function tbl_keys(table)
+	local keys = {}
+	for key, _ in pairs(table) do
+		keys[#keys + 1] = key
+	end
+	return keys
+end
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
 
 --- read b3d models by their name. This simplifies read_from_stream.
@@ -326,7 +339,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 					end
 				elseif type == "KEYS" then
 					if not ignored[type] then
-						mtul.tbl.append(node.keys, elem)
+						tbl_append(node.keys, elem)
 					end
 				elseif type == "NODE" then
 					elem.parent = node
@@ -364,9 +377,9 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 				local field, type = chunk{TEXS = true, BRUS = true, NODE = true}
 				if not ignored[type] then
 					if type == "TEXS" then
-						mtul.tbl.append(self.textures, field)
+						tbl_append(self.textures, field)
 					elseif type == "BRUS" then
-						mtul.tbl.append(self.brushes, field)
+						tbl_append(self.brushes, field)
 					else
 						self.node = field
 					end
@@ -386,7 +399,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 		local parent_left
 		left, parent_left = new_left, left
 		if possible_chunks and not possible_chunks[type] then
-			error("expected one of " .. table.concat(mtul.tbl.keys(possible_chunks), ", ") .. ", found " .. type .. ". This is likely exporter error.")
+			error("expected one of " .. table.concat(tbl_keys(possible_chunks), ", ") .. ", found " .. type .. ". This is likely exporter error.")
 		end
 		local res = assert(chunks[type])()
 		assert(left == 0)
