@@ -145,7 +145,7 @@ end
 --@return `y`
 --@return `z`
 function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
-    assert(self or not type(node)=="string")
+    assert(self or type(node)~="string", "cannot find `node` by name if b3d object is not provided.")
     assert(node, "cannot get position of a nil node")
     assert(frame, "no frame specified!")
     if type(node) == "string" then
@@ -162,7 +162,7 @@ end
 --@param frame the frame to find the global rotation of the node at.
 --@return `rotation` quaternion rotation of the node (may not be normalized)
 function b3d_nodes.get_node_rotation(self, node, is_bone, frame)
-    assert(self or not type(node)=="string")
+    assert(self or type(node)~="string", "no model provided, node name cannot be found from a nonexistent model")
     assert(node, "cannot get rotation of a nil node")
     assert(frame, "no frame specified!")
     if type(node) == "string" then

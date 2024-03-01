@@ -39,7 +39,7 @@ end
 function mtul.b3d_reader.read_model(modelname, node_only)
 	assert(modelname, "no modelname provided")
 	-- @todo remove core dependancy on
-	local path = assert(mtul.media_paths[modelname], "no model found by the name "..modelname.."'")
+	local path = assert(mtul.paths.media_paths[modelname], "no model found by the name "..modelname.."'")
 	local out
 	local ignored
 	if node_only then
@@ -323,6 +323,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			local node_type
 			-- See https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp#L263
 			-- Order is not validated; double occurrences of mutually exclusive node def are
+			--"are" what appgurueu
 			while content() do
 				local elem, type = chunk()
 				if type == "MESH" then
