@@ -1,5 +1,8 @@
+--- writes b3d models in the same format as outputted by the b3d reader module
+--@module b3d_writer
 
--- Writer
+
+--Writer
 local write_int, write_single = mtul.binary.write_int, mtul.binary.write_single
 local string_char = string.char
 
@@ -84,9 +87,13 @@ local function write_rope(self)
 
 	local function NODE(node)
 		chunk("NODE", function()
+			assert(node.scale, "a node is missing a name")
 			string(node.name)
+			assert(node.scale, "a node is missing position")
 			vector3(node.position)
+			assert(node.scale, "a node is missing scale")
 			vector3(node.scale)
+			assert(node.scale, "a node is missing rotation")
 			quaternion(node.rotation)
 			local mesh = node.mesh
 			if mesh then
@@ -210,11 +217,19 @@ local function write_rope(self)
 	return rope
 end
 
-function mtul.b3d.write_string(self)
+--- output a string of binary in the blitz 3d format
+-- @function mtul.b3d_writer.write_string
+-- @param self @{BB3D}
+-- @return string containing the binary file
+function mtul.b3d_writer.write_string(self)
 	return table.concat(write_rope(self))
 end
 
-function mtul.b3d.write(self, stream)
+--- output in the blitz3d format file reference
+-- @function mtul.b3d_writer.write_model_to_file
+-- @param self @{BB3D}
+-- @param stream io file object to write to
+function mtul.b3d_writer.write_model_to_file(self, stream)
 	for _, str in ipairs(write_rope(self)) do
 		stream:write(str)
 	end

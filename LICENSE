@@ -1,8 +1,5 @@
-"/modlib/" sub directory: Copright (c) respective owner(s), see the directory
-for it's respective license (License.txt). Once again note that the "/modlib/"
-directory in this case is explicitly exempt from the following MIT License.
-
-for all other files outside of "/modlib/" directory:
+"/modlib/" directory: Copright (c) respective owners, see License.txt within the "/modlib/" directory.
+All files outside of the modlib directory fall under the following license:
 
 MIT License
 

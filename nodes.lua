@@ -12,7 +12,7 @@ local mat4 = mtul.math.mat4
 local quat = mtul.math.quat
 
 --- get a node by it's name
--- @function get_node_by_name
+-- @function mtul.b3d_nodes.get_node_by_name
 -- @param self the b3d table (from b3d_reader)
 -- @param node_name the name of the node to fine
 -- @param is_bone (optional) bool to indicate wether the node is a bone or not (incase there's a mesh named the same thing). False will only return meshes and pivots, true will only return bones. Nil will return any.
@@ -35,15 +35,6 @@ end
 --keep in mind that this returns *raw* info, other then vectorizing quaternions (as slerp has to be performed to interpolate).
 --further, quaternions need to have their w inverted.
 
---- get the local "TRS" (translation, rotation, scale) of a bone in animation. This is used for global transformation calculations.
---- quaternion is returned as a string indexed table because it needs to be a cpml object to be interpolated, also has to be usable anyway.
--- @function get_animated_local_trs
--- @param node table, the node from within a b3d table to read (as outputed by b3d_reader).
--- @param target_frame float, the frame to find the TRS in, can be inbetween frames/keyframes (of course).
--- @return `position` ordered table: {x, y, z}
--- @return `rotation` quat from `mtul_cpml`: (example) {w=0,x=0,y=0,z=1}
--- @return `scale` ordered table: {x, y, z}
---outputs need cleaning up.
 local interpolate = function(a, b, ratio)
     local out = {}
     for i, v in pairs(a) do
@@ -51,6 +42,16 @@ local interpolate = function(a, b, ratio)
     end
     return out
 end
+
+--- get the local "TRS" (translation, rotation, scale) of a bone in animation. This is used for global transformation calculations.
+--- quaternion is returned as a string indexed table because it needs to be a cpml object to be interpolated, also has to be usable anyway.
+-- @function mtul.b3d_nodes.get_animated_local_trs
+-- @param node table, the node from within a b3d table to read (as outputed by b3d_reader).
+-- @param target_frame float, the frame to find the TRS in, can be inbetween frames/keyframes (of course).
+-- @return `position` ordered table: {x, y, z}
+-- @return `rotation` quat from `mtul_cpml`: (example) {w=0,x=0,y=0,z=1}
+-- @return `scale` ordered table: {x, y, z}
+--outputs need cleaning up.
 function b3d_nodes.get_animated_local_trs(node, target_frame)
     assert(target_frame, "no frame specified for TRS calculations")
     local frames = node.keys
@@ -89,7 +90,7 @@ end
 --param 3 (outputs) is either "rotation" or "transform"- determines what's calculated. You can use this if you dont want uncessary calculations. If nil outputs both
 
 --- get a node's global mat4 transform and rotation.
--- @function get_node_global_transform
+-- @function mtul.b3d_nodes.get_node_global_transform
 -- @param node table, the node from within a b3d table to read (as outputed by `b3d_reader`).
 -- @param frame float, the frame to find the transform and rotation in.
 -- @param outputs (optional) string, either "rotation" or "transform". Set to nil to return both.
@@ -136,7 +137,7 @@ end
 --Returns X, Y, Z. is_bone is optional, if "node" is the name of a node (and not the node table), parameter 1 (self) and parameter 3 (is_bone) is used to find it.
 
 --- find the position of a node in global model space.
---@function get_node_global_position
+--@function mtul.b3d_nodes.get_node_global_position
 --@param self b3d table, (optional if node is a node table and not name)
 --@param node string or table, either the node from b3d table or a the name of the node to find.
 --@param is_bone (optional) if node is string, this is used to find it (see `get_node_by_name`)
@@ -155,7 +156,7 @@ function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
     return transform[13], transform[14], transform[15]
 end
 --- find the global rotation of a node in model space.
---@function get_node_rotation
+--@function mtul.b3d_nodes.get_node_rotation
 --@param self b3d table, (optional if node is a node table and not name)
 --@param node string or table, either the node from b3d table or a the name of the node to find.
 --@param is_bone (optional) if node is string, this is used to find it (see `get_node_by_name`)

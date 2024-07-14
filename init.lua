@@ -10,12 +10,13 @@
 ]]
 
 mtul.b3d_reader = {}
+mtul.b3d_writer = {}
 mtul.loaded_modules.b3d = true
 
 local modpath = minetest.get_modpath("mtul_b3d")
 --placed in a seperate directory for the license
 dofile(modpath.."/modlib/read_b3d.lua")
---dofile(modpath.."/modlib/write_b3d.lua") --this is untested, could be very broken.
+dofile(modpath.."/modlib/write_b3d.lua")
 --dofile(modpath.."/modlib/to_gltf.lua")
 
 --prevent accidental access of unavailable features:

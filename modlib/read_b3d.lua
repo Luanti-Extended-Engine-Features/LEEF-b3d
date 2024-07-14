@@ -1,17 +1,5 @@
-
---this reader has been heavily modified to implement additional needed features.
---implementations include:
-
---mtul.b3d.read_model()
---ignore_chunks parameter,
---node.parent,
---node.path
---b3d.node_paths
-
--- Localize globals
-
 --- parse .b3d files into a lua table.
---- located in `mtul.b3d_reader`.
+-- note: capitlization of name indicates a "chunk" defined by the blitz3d format (see b3d_specification.txt)
 --@module b3d_reader
 
 local read_int, read_single = mtul.binary.read_int, mtul.binary.read_single
@@ -32,7 +20,7 @@ end
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
 
 --- read b3d models by their name. This simplifies read_from_stream.
--- @function read_model
+-- @function mtul.b3d_reader.read_model
 -- @param modelname string, the name of model you are trying to read.
 -- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
 -- @return b3d table (documentation needed!)
@@ -68,12 +56,6 @@ end
 --made originally by appgurueu
 -- See `b3d_specification.txt` as well as https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp
 
---- read directly from file
--- @function read_from_stream
--- @param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
--- @param ignore_chunks a list of chunks to be ignored (documentation needed)
--- @return b3d table (documentation needed!)
-
 --- an unordered list of the following string chunks.
 --- "NODE" and "BB3D" are ommitted as they are not allowed.
 -- @field 1 "TEXS" texture information
@@ -84,8 +66,13 @@ end
 -- @field 6 "BONE" node vertex weights
 -- @field 7 "ANIM" animation information
 -- @field 8 "KEYS" keyframes
--- @table ignore_chunks
+-- @table chunks
 
+--- read directly from file
+-- @function mtul.b3d_reader.read_from_stream
+-- @param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
+-- @param ignore_chunks a list of @{chunks} to be ignored (documentation needed)
+-- @return @{BB3D} (documentation needed!)
 function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
 
@@ -210,6 +197,12 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return brushes
 		end,
 		VRTS = function()
+			--- vertices
+			--@field flags uknown
+			--@field tex_coord_sets the number of texture coordinate sets
+			--@field tex_coord_set_size unknown
+			--@field ... a list of vertices, the integer index defines their vertex_ids { pos={x,y,z}, color={r, g, b, a}, tex_coords=... }
+			--@table VRTS
 			local vertices = {}
 			vertices.flags = int()
 			vertices.tex_coord_sets = int()
@@ -235,6 +228,10 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return vertices
 		end,
 		TRIS = function()
+			--- triangle/poly sets
+			--@field brush_id
+			--@field vertex_ids a list of three vertex IDs {i, j, k} which make it up
+			--@table TRIS
 			local tris = {}
 			tris.brush_id = id()
 			tris.vertex_ids = {}
@@ -247,6 +244,11 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return tris
 		end,
 		MESH = function()
+			--- the mesh chunk table
+			-- @field brush_id (may not exist) brush from brush chunk to use
+			-- @field vertices @{VRTS} vertices and indexed by their ID and additional info
+			-- @field triangle_sets @{TRIS} a list of three vertices to be used in
+			-- @table MESH
 			local mesh = {}
 			mesh.brush_id = optional_id()
 			mesh.vertices = chunk{VRTS = true}
@@ -258,6 +260,9 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return mesh
 		end,
 		BONE = function()
+			--- bone table
+			-- a list of vertex weights indexed by their vertex_id
+			-- @table BONE
 			local bone = {}
 			while content() do
 				local vertex_id = id()
@@ -270,6 +275,10 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end
 			return bone
 		end,
+		--- keyframes
+		--@field flags defines if position rotation and scale exists (further explanation needed)
+		--@field ... a list of @{keyframe}s
+		--@table KEYS a list of keyframes
 		KEYS = function()
 			local flags = int()
 			local _flags = flags % 8
@@ -287,6 +296,11 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 				flags = flags
 			}
 			while content() do
+				--- table which specifies a keyframe
+				--@position position relative to parent {x,y,z}
+				--@rotation quaternion rotation {x,y,z,w}
+				--@scale = {x,y,z}
+				--@table keyframe
 				local frame = {}
 				--minetest uses a zero indexed frame system, so for consistency, we offset it by 1
 				frame.frame = int()-1
@@ -303,6 +317,11 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end
 			return bone
 		end,
+		--- defines the animation of a model
+		--@field flags unused?
+		--@field frames number of frames
+		--@field fps framerate of the model
+		--@table ANIM
 		ANIM = function()
 			local ret = {}
 			ret.flags = int() -- flags are unused
@@ -311,6 +330,23 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return ret
 		end,
 		NODE = function()
+			--- node
+			-- a node chunk possibly containing the following chunks.
+			-- there are three possible "types" of nodes. All bones will contain the following chunks:
+			-- position, rotation, scale. Bones will have a
+			-- bone field which will contain IDs from it's parent node's mesh chunk.
+			-- @field name
+			-- @field type string which is either "pivot", "bone" or "mesh"
+			-- @field children a list of child nodes, Transoformations (position, rotation, scale) will be applied to the children.
+			-- @field position position {x, y, z} of the bone
+			-- @field rotation quaternion {x, y, z, w} rotation of the bone at rest
+			-- @field scale {x, y, z} scale of the bone at rest
+			-- @field mesh @{MESH} chunk. Found in **mesh** node
+			-- @field bone @{BONE} chunk. Found in **bone** node
+			-- @field keys @{KEYS} chunk. Found in **bone** node
+			-- @field animation @{ANIM} chunk. Typically found in root node (uknown wether it can be elsewhere.)
+			-- @field parent the parent node. (The node in which this node is in the children table)
+			-- @table NODE
 			local node = {}
 			node.name = string()
 			node.position = vector3()
@@ -321,9 +357,9 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			node.rotation = quaternion()
 			node.children = {}
 			local node_type
-			-- See https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp#L263
-			-- Order is not validated; double occurrences of mutually exclusive node def are
-			--"are" what appgurueu
+			--See https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp#L263
+			--Order is not validated; double occurrences of mutually exclusive node def are
+			--... they are what appgurueu????
 			while content() do
 				local elem, type = chunk()
 				if type == "MESH" then
@@ -350,7 +386,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 						node.animation = elem
 					end
 				else
-					assert(not node_type, "Appgurueu decided to not put actual comments, so I'm not sure, but your .b3d file is fscked up lol. I dont even think this assert is needed.")
+					assert(not node_type, "Appgurueu decided to not put actual comments telling me what this means, so I'm not sure, but your .b3d file is fscked up lol. I dont even think this assert is needed.")
 					node_type = "pivot"
 				end
 			end
@@ -363,6 +399,14 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end)
 			return node
 		end,
+		--- b3d table
+		-- note: in the b3d writer the node_paths field is ignored
+		-- @field node_paths all of the nodes in the model @{b3d_nodes}
+		-- @field node a table containing the root @{NODE} of the model.
+		-- @field textures @{TEXS} texture information
+		-- @field brushes @{BRUS} material information
+		-- @field version `{major=float, minor=float}` this functionally means nothing, but it's version information.
+		-- @table BB3D
 		BB3D = function()
 			local version = int()
 			local self = {
@@ -441,5 +485,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	return setmetatable(self, mtul._b3d_metatable or {})
 end
 
---- b3d table
--- @field node_paths
+--- node paths
+-- a list of nodes indexed by a hieracrchy of nodes i.e. "path.to.node"
+-- @field (...) node
+-- @table node_paths
