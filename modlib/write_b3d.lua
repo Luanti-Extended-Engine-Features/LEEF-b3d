@@ -151,7 +151,8 @@ local function write_rope(self)
 					chunk("KEYS", function()
 						int(flags)
 						for _, frame in ipairs(keys) do
-							int(frame.frame)
+							--reader offsets by 1, so writer should to.
+							int(frame.frame+1)
 							if frame.position then vector3(frame.position) end
 							if frame.scale then vector3(frame.scale) end
 							if frame.rotation then quaternion(frame.rotation) end
@@ -219,7 +220,7 @@ end
 
 --- output a string of binary in the blitz 3d format
 -- @function mtul.b3d_writer.write_string
--- @param self @{BB3D}
+-- @param self @{b3d_reader.BB3D|BB3D chunk}
 -- @return string containing the binary file
 function mtul.b3d_writer.write_string(self)
 	return table.concat(write_rope(self))
@@ -227,7 +228,7 @@ end
 
 --- output in the blitz3d format file reference
 -- @function mtul.b3d_writer.write_model_to_file
--- @param self @{BB3D}
+-- @param self @{b3d_reader.BB3D|BB3D chunk}
 -- @param stream io file object to write to
 function mtul.b3d_writer.write_model_to_file(self, stream)
 	for _, str in ipairs(write_rope(self)) do

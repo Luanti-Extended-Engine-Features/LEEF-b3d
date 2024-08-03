@@ -66,13 +66,13 @@ end
 -- @field 6 "BONE" node vertex weights
 -- @field 7 "ANIM" animation information
 -- @field 8 "KEYS" keyframes
--- @table chunks
+-- @table ignore_chunks
 
 --- read directly from file
 -- @function mtul.b3d_reader.read_from_stream
 -- @param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
--- @param ignore_chunks a list of @{chunks} to be ignored (documentation needed)
--- @return @{BB3D} (documentation needed!)
+-- @param ignore_chunks a list of @{ignore_chunks} to be ignored
+-- @return @{BB3D}
 function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
 
@@ -164,6 +164,12 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local chunk
 	local chunks = {
 		TEXS = function()
+			--- textures
+			--@field file
+			--@field flags
+			--@field pos table {float, float}
+			--@field pos table {float, float}
+			--@table TEXS
 			local textures = {}
 			while content() do
 				local tex = {}
@@ -178,6 +184,14 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return textures
 		end,
 		BRUS = function()
+			--- brushes (materials)
+			-- @field name
+			-- @field color
+			-- @field shininess
+			-- @field blend
+			-- @field fx
+			-- @field texture_id
+			-- @table BRUS
 			local brushes = {}
 			local n_texs = int()
 			assert(n_texs <= 8)
@@ -330,11 +344,13 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return ret
 		end,
 		NODE = function()
-			--- node
-			-- a node chunk possibly containing the following chunks.
+			--- a node chunk possibly containing the following chunks.
 			-- there are three possible "types" of nodes. All bones will contain the following chunks:
-			-- position, rotation, scale. Bones will have a
-			-- bone field which will contain IDs from it's parent node's mesh chunk.
+			-- `position`, `rotation`, `scale`.
+			-- Bones will have a bone field which will contain IDs from it's parent node's mesh chunk.
+			-- Meshes will have a mesh field containing information about their mesh.
+			-- Pivots will have neither of those and simply serve as parents to child nodes. <3
+			--
 			-- @field name
 			-- @field type string which is either "pivot", "bone" or "mesh"
 			-- @field children a list of child nodes, Transoformations (position, rotation, scale) will be applied to the children.
@@ -399,12 +415,11 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end)
 			return node
 		end,
-		--- b3d table
-		-- note: in the b3d writer the node_paths field is ignored
-		-- @field node_paths all of the nodes in the model @{b3d_nodes}
+		--- note: in `b3d_writer` the node_paths field is ignored
+		-- @field node_paths all nodes in the model indexed by a table @{node_paths}
 		-- @field node a table containing the root @{NODE} of the model.
-		-- @field textures @{TEXS} texture information
-		-- @field brushes @{BRUS} material information
+		-- @field textures a list of @{TEXS} chunks
+		-- @field brushes a list of @{BRUS} chunks
 		-- @field version `{major=float, minor=float}` this functionally means nothing, but it's version information.
 		-- @table BB3D
 		BB3D = function()
@@ -458,7 +473,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	--also, Fatal here: for the sake of my reputation (which is nonexistent), typically I wouldn't nest these functions
 	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen.
 	--(Not that its *always* a bad idea, but unless you're baking in parameters it's sort of useless and potentially wasteful)
-	local copy_path = mtul.table and mtul.table.shallow_copy or function(tbl)
+	local copy_path = function(tbl)
 		local new_table = {}
 		for i, v in pairs(tbl) do
 			new_table[i] = v
@@ -486,6 +501,6 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 end
 
 --- node paths
--- a list of nodes indexed by a hieracrchy of nodes i.e. "path.to.node"
+-- a list of nodes indexed by a list which containing every related parent node aswell as itself.
 -- @field (...) node
 -- @table node_paths

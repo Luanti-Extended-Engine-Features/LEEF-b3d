@@ -68,8 +68,16 @@
 <h2><a href="#Tables">Tables</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#chunks">chunks</a></td>
+	<td class="name" nowrap><a href="#ignore_chunks">ignore_chunks</a></td>
 	<td class="summary">an unordered list of the following string chunks.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TEXS">TEXS</a></td>
+	<td class="summary">textures</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#BRUS">BRUS</a></td>
+	<td class="summary">brushes (materials)</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#VRTS">VRTS</a></td>
@@ -102,18 +110,16 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#NODE">NODE</a></td>
-	<td class="summary">node
- a node chunk possibly containing the following chunks.</td>
+	<td class="summary">a node chunk possibly containing the following chunks.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#BB3D">BB3D</a></td>
-	<td class="summary">b3d table
- note: in the b3d writer the node_paths field is ignored</td>
+	<td class="summary">note: in <code>b3d_writer</code> the node_paths field is ignored</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#node_paths">node_paths</a></td>
 	<td class="summary">node paths
- a list of nodes indexed by a hieracrchy of nodes i.e.</td>
+ a list of nodes indexed by a list which containing every related parent node aswell as itself.</td>
 	</tr>
 </table>
 
@@ -166,14 +172,14 @@
          the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
         </li>
         <li><span class="parameter">ignore_chunks</span>
-         a list of <a href="../modules/b3d_reader.html#chunks">chunks</a> to be ignored (documentation needed)
+         a list of <a href="../modules/b3d_reader.html#ignore_chunks">ignore_chunks</a> to be ignored
         </li>
     </ul>
 
     <h3>Returns:</h3>
     <ol>
 
-        <a href="../modules/b3d_reader.html#BB3D">BB3D</a> (documentation needed!)
+        <a href="../modules/b3d_reader.html#BB3D">BB3D</a>
     </ol>
 
 
@@ -185,8 +191,8 @@
 
     <dl class="function">
     <dt>
-    <a name = "chunks"></a>
-    <strong>chunks</strong>
+    <a name = "ignore_chunks"></a>
+    <strong>ignore_chunks</strong>
     </dt>
     <dd>
     an unordered list of the following string chunks.
@@ -218,6 +224,86 @@
         </li>
         <li><span class="parameter">8</span>
          "KEYS" keyframes
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "TEXS"></a>
+    <strong>TEXS</strong>
+    </dt>
+    <dd>
+    textures
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">file</span>
+
+
+
+        </li>
+        <li><span class="parameter">flags</span>
+
+
+
+        </li>
+        <li><span class="parameter">pos</span>
+         table {float, float}
+        </li>
+        <li><span class="parameter">pos</span>
+         table {float, float}
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "BRUS"></a>
+    <strong>BRUS</strong>
+    </dt>
+    <dd>
+    brushes (materials)
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+
+
+
+        </li>
+        <li><span class="parameter">color</span>
+
+
+
+        </li>
+        <li><span class="parameter">shininess</span>
+
+
+
+        </li>
+        <li><span class="parameter">blend</span>
+
+
+
+        </li>
+        <li><span class="parameter">fx</span>
+
+
+
+        </li>
+        <li><span class="parameter">texture_id</span>
+
+
+
         </li>
     </ul>
 
@@ -389,11 +475,12 @@
     <strong>NODE</strong>
     </dt>
     <dd>
-    node
- a node chunk possibly containing the following chunks.
+    a node chunk possibly containing the following chunks.
  there are three possible "types" of nodes. All bones will contain the following chunks:
- position, rotation, scale. Bones will have a
- bone field which will contain IDs from it's parent node's mesh chunk.
+ <code>position</code>, <code>rotation</code>, <code>scale</code>.
+ Bones will have a bone field which will contain IDs from it's parent node's mesh chunk.
+ Meshes will have a mesh field containing information about their mesh.
+ Pivots will have neither of those and simply serve as parents to child nodes. &lt;3
 
 
     <h3>Fields:</h3>
@@ -445,23 +532,22 @@
     <strong>BB3D</strong>
     </dt>
     <dd>
-    b3d table
- note: in the b3d writer the node_paths field is ignored
+    note: in <code>b3d_writer</code> the node_paths field is ignored
 
 
     <h3>Fields:</h3>
     <ul>
         <li><span class="parameter">node_paths</span>
-         all of the nodes in the model <a href="../modules/b3d_nodes.html#">b3d_nodes</a>
+         all nodes in the model indexed by a table <a href="../modules/b3d_reader.html#node_paths">node_paths</a>
         </li>
         <li><span class="parameter">node</span>
          a table containing the root <a href="../modules/b3d_reader.html#NODE">NODE</a> of the model.
         </li>
         <li><span class="parameter">textures</span>
-         ??? texture information
+         a list of <a href="../modules/b3d_reader.html#TEXS">TEXS</a> chunks
         </li>
         <li><span class="parameter">brushes</span>
-         ??? material information
+         a list of <a href="../modules/b3d_reader.html#BRUS">BRUS</a> chunks
         </li>
         <li><span class="parameter">version</span>
          <code>{major=float, minor=float}</code> this functionally means nothing, but it's version information.
@@ -479,7 +565,7 @@
     </dt>
     <dd>
     node paths
- a list of nodes indexed by a hieracrchy of nodes i.e.  "path.to.node"
+ a list of nodes indexed by a list which containing every related parent node aswell as itself.
 
 
     <h3>Fields:</h3>
@@ -501,7 +587,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/lunarmodules/ldoc">LDoc 1.5.0</a></i>
-<i style="float:right;">Last updated 2024-07-14 13:05:02 </i>
+<i style="float:right;">Last updated 2024-08-03 16:24:48 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
