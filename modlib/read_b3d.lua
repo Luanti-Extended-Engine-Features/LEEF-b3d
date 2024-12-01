@@ -2,7 +2,7 @@
 -- note: capitlization of name indicates a "chunk" defined by the blitz3d format (see b3d_specification.txt)
 --@module b3d_reader
 
-local read_int, read_single = mtul.binary.read_int, mtul.binary.read_single
+local read_int, read_single = leef.binary.read_int, leef.binary.read_single
 local function tbl_append(table, other_table)
 	local length = #table
 	for index, value in ipairs(other_table) do
@@ -20,14 +20,14 @@ end
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
 
 --- read b3d models by their name. This simplifies read_from_stream.
--- @function mtul.b3d_reader.read_model
+-- @function leef.b3d_reader.read_model
 -- @param modelname string, the name of model you are trying to read.
 -- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
 -- @return b3d table (documentation needed!)
-function mtul.b3d_reader.read_model(modelname, node_only)
+function leef.b3d_reader.read_model(modelname, node_only)
 	assert(modelname, "no modelname provided")
 	-- @todo remove core dependancy on
-	local path = assert(mtul.paths.media_paths[modelname], "no model found by the name "..modelname.."'")
+	local path = assert(leef.paths.media_paths[modelname], "no model found by the name "..modelname.."'")
 	local out
 	local ignored
 	if node_only then
@@ -35,8 +35,8 @@ function mtul.b3d_reader.read_model(modelname, node_only)
 	end
 	local stream = io.open(path, "rb")
 	if not stream then return end --if the file wasn't found we probably shouldnt just assert.
-	out = mtul.b3d_reader.read_from_stream(stream, ignored)
-	assert(stream:read(1)==nil, "MTUL b3d_reader: unknown error, EOF not reached")
+	out = leef.b3d_reader.read_from_stream(stream, ignored)
+	assert(stream:read(1)==nil, "LEEF b3d_reader: unknown error, EOF not reached")
 	stream:close()
 	return out
 end
@@ -66,14 +66,14 @@ end
 -- @field 6 "BONE" node vertex weights
 -- @field 7 "ANIM" animation information
 -- @field 8 "KEYS" keyframes
--- @table ignore_chunks
+-- @table chunks
 
 --- read directly from file
--- @function mtul.b3d_reader.read_from_stream
+-- @function leef.b3d_reader.read_from_stream
 -- @param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
--- @param ignore_chunks a list of @{ignore_chunks} to be ignored
--- @return @{BB3D}
-function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
+-- @param ignore_chunks a list of @{chunks} to be ignored (documentation needed)
+-- @return @{BB3D} (documentation needed!)
+function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
 
 	local ignored = {}
@@ -164,12 +164,6 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local chunk
 	local chunks = {
 		TEXS = function()
-			--- textures
-			--@field file
-			--@field flags
-			--@field pos table {float, float}
-			--@field pos table {float, float}
-			--@table TEXS
 			local textures = {}
 			while content() do
 				local tex = {}
@@ -184,14 +178,6 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return textures
 		end,
 		BRUS = function()
-			--- brushes (materials)
-			-- @field name
-			-- @field color
-			-- @field shininess
-			-- @field blend
-			-- @field fx
-			-- @field texture_id
-			-- @table BRUS
 			local brushes = {}
 			local n_texs = int()
 			assert(n_texs <= 8)
@@ -344,13 +330,11 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return ret
 		end,
 		NODE = function()
-			--- a node chunk possibly containing the following chunks.
+			--- node
+			-- a node chunk possibly containing the following chunks.
 			-- there are three possible "types" of nodes. All bones will contain the following chunks:
-			-- `position`, `rotation`, `scale`.
-			-- Bones will have a bone field which will contain IDs from it's parent node's mesh chunk.
-			-- Meshes will have a mesh field containing information about their mesh.
-			-- Pivots will have neither of those and simply serve as parents to child nodes. <3
-			--
+			-- position, rotation, scale. Bones will have a
+			-- bone field which will contain IDs from it's parent node's mesh chunk.
 			-- @field name
 			-- @field type string which is either "pivot", "bone" or "mesh"
 			-- @field children a list of child nodes, Transoformations (position, rotation, scale) will be applied to the children.
@@ -415,11 +399,12 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end)
 			return node
 		end,
-		--- note: in `b3d_writer` the node_paths field is ignored
-		-- @field node_paths all nodes in the model indexed by a table @{node_paths}
+		--- b3d table
+		-- note: in the b3d writer the node_paths field is ignored
+		-- @field node_paths all of the nodes in the model @{b3d_nodes}
 		-- @field node a table containing the root @{NODE} of the model.
-		-- @field textures a list of @{TEXS} chunks
-		-- @field brushes a list of @{BRUS} chunks
+		-- @field textures @{TEXS} texture information
+		-- @field brushes @{BRUS} material information
 		-- @field version `{major=float, minor=float}` this functionally means nothing, but it's version information.
 		-- @table BB3D
 		BB3D = function()
@@ -473,7 +458,7 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	--also, Fatal here: for the sake of my reputation (which is nonexistent), typically I wouldn't nest these functions
 	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen.
 	--(Not that its *always* a bad idea, but unless you're baking in parameters it's sort of useless and potentially wasteful)
-	local copy_path = function(tbl)
+	local copy_path = leef.table and leef.table.shallow_copy or function(tbl)
 		local new_table = {}
 		for i, v in pairs(tbl) do
 			new_table[i] = v
@@ -497,10 +482,10 @@ function mtul.b3d_reader.read_from_stream(stream, ignore_chunks)
 	make_paths(self.node, {}, self.node_paths)
 
 	--b3d metatable unimplemented
-	return setmetatable(self, mtul._b3d_metatable or {})
+	return setmetatable(self, leef._b3d_metatable or {})
 end
 
 --- node paths
--- a list of nodes indexed by a list which containing every related parent node aswell as itself.
+-- a list of nodes indexed by a hieracrchy of nodes i.e. "path.to.node"
 -- @field (...) node
 -- @table node_paths

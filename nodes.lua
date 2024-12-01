@@ -1,18 +1,18 @@
 --- allows you to get information about nodes (bones or meshes) within a b3d table (generated with `b3d_reader`)
---- located in `mtul.b3d_nodes`.
---- WARNING! mtul-cpml must be present for this module to run!
+--- located in `leef.b3d_nodes`.
+--- WARNING! leef_math must be present for this module to run!
 --@module b3d_nodes
---@warning for this module mtul_cpml is required, trying to use these functions without mtul_cpml ran will error.
+--@warning for this module leef_math is required, trying to use these functions without leef_math ran will error.
 
 --gets node by name
 --this breaks if you have multiple nodes with the same name.
 --if there are meshes that go by the same name, you can set "bone" param to true.
 local b3d_nodes = {}
-local mat4 = mtul.math.mat4
-local quat = mtul.math.quat
+local mat4 = leef.math.mat4
+local quat = leef.math.quat
 
 --- get a node by it's name
--- @function mtul.b3d_nodes.get_node_by_name
+-- @function leef.b3d_nodes.get_node_by_name
 -- @param self the b3d table (from b3d_reader)
 -- @param node_name the name of the node to fine
 -- @param is_bone (optional) bool to indicate wether the node is a bone or not (incase there's a mesh named the same thing). False will only return meshes and pivots, true will only return bones. Nil will return any.
@@ -28,7 +28,7 @@ function b3d_nodes.get_node_by_name(self, node_name, is_bone)
         end
     end
     --don't know why I'd ever just not return nil?
-    --error("MTUL-b3d, b3d_nodes: no node found by the name '"..tostring(node_name).."'")
+    --error("LEEF-b3d, b3d_nodes: no node found by the name '"..tostring(node_name).."'")
 end
 
 --non-methods:
@@ -44,12 +44,12 @@ local interpolate = function(a, b, ratio)
 end
 
 --- get the local "TRS" (translation, rotation, scale) of a bone in animation. This is used for global transformation calculations.
---- quaternion is returned as a string indexed table because it needs to be a cpml object to be interpolated, also has to be usable anyway.
--- @function mtul.b3d_nodes.get_animated_local_trs
+--- quaternion is returned as a string indexed table because it needs to be a math object to be interpolated, also has to be usable anyway.
+-- @function leef.b3d_nodes.get_animated_local_trs
 -- @param node table, the node from within a b3d table to read (as outputed by b3d_reader).
 -- @param target_frame float, the frame to find the TRS in, can be inbetween frames/keyframes (of course).
 -- @return `position` ordered table: {x, y, z}
--- @return `rotation` quat from `mtul_cpml`: (example) {w=0,x=0,y=0,z=1}
+-- @return `rotation` quat from `leef_math`: (example) {w=0,x=0,y=0,z=1}
 -- @return `scale` ordered table: {x, y, z}
 --outputs need cleaning up.
 function b3d_nodes.get_animated_local_trs(node, target_frame)
@@ -90,11 +90,11 @@ end
 --param 3 (outputs) is either "rotation" or "transform"- determines what's calculated. You can use this if you dont want uncessary calculations. If nil outputs both
 
 --- get a node's global mat4 transform and rotation.
--- @function mtul.b3d_nodes.get_node_global_transform
+-- @function leef.b3d_nodes.get_node_global_transform
 -- @param node table, the node from within a b3d table to read (as outputed by `b3d_reader`).
 -- @param frame float, the frame to find the transform and rotation in.
 -- @param outputs (optional) string, either "rotation" or "transform". Set to nil to return both.
--- @return `global_transform`, a matrix 4x4, note that CPML's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `mtul_cpml` docs)
+-- @return `global_transform`, a matrix 4x4, note that MATH's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `leef_math` docs)
 -- @return `rotation quat`, the quaternion rotation in global space. (cannot be assumed to be normalized, this uses raw interpolated data from the b3d reader)
 function b3d_nodes.get_node_global_transform(node, frame, outputs)
     local global_transform
@@ -137,7 +137,7 @@ end
 --Returns X, Y, Z. is_bone is optional, if "node" is the name of a node (and not the node table), parameter 1 (self) and parameter 3 (is_bone) is used to find it.
 
 --- find the position of a node in global model space.
---@function mtul.b3d_nodes.get_node_global_position
+--@function leef.b3d_nodes.get_node_global_position
 --@param self b3d table, (optional if node is a node table and not name)
 --@param node string or table, either the node from b3d table or a the name of the node to find.
 --@param is_bone (optional) if node is string, this is used to find it (see `get_node_by_name`)
@@ -156,7 +156,7 @@ function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
     return transform[13], transform[14], transform[15]
 end
 --- find the global rotation of a node in model space.
---@function mtul.b3d_nodes.get_node_rotation
+--@function leef.b3d_nodes.get_node_rotation
 --@param self b3d table, (optional if node is a node table and not name)
 --@param node string or table, either the node from b3d table or a the name of the node to find.
 --@param is_bone (optional) if node is string, this is used to find it (see `get_node_by_name`)

@@ -9,7 +9,7 @@
 --! Highly experimental; expect bugs!
 
 -- glTF constants
-local write_int, write_uint, write_single = mtul.binary.write_int, mtul.binary.write_uint, mtul.binary.write_single
+local write_int, write_uint, write_single = leef.binary.write_int, leef.binary.write_uint, leef.binary.write_single
 local array_buffer = 34962 -- "Buffer containing vertex attributes, such as vertices, texcoords or colors."
 local element_array_buffer = 34963 -- "Buffer used for element indices."
 local component_type = {
@@ -76,7 +76,7 @@ local function write_quaternion(write_byte, quat)
     return write_floats(write_byte, quaternion_to_gltf(quat), 4)
 end
 
-function mtul.b3d.to_gltf(self)
+function leef.b3d.to_gltf(self)
     -- Accessor helper: Stores arrays of raw data in a buffer, produces views & accessors.
     -- Everything is dumped in the same large buffer.
     local buffer_rope = {} -- buffer content (table of strings)

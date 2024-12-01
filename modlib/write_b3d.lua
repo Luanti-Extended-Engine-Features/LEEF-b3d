@@ -3,7 +3,7 @@
 
 
 --Writer
-local write_int, write_single = mtul.binary.write_int, mtul.binary.write_single
+local write_int, write_single = leef.binary.write_int, leef.binary.write_single
 local string_char = string.char
 
 local function write_rope(self)
@@ -37,7 +37,7 @@ local function write_rope(self)
 	end
 
 	local function float(val)
-		write_single(byte, mtul.binary.fround(val))
+		write_single(byte, leef.binary.fround(val))
 	end
 
 	local function float_array(arr, len)
@@ -151,8 +151,7 @@ local function write_rope(self)
 					chunk("KEYS", function()
 						int(flags)
 						for _, frame in ipairs(keys) do
-							--reader offsets by 1, so writer should to.
-							int(frame.frame+1)
+							int(frame.frame)
 							if frame.position then vector3(frame.position) end
 							if frame.scale then vector3(frame.scale) end
 							if frame.rotation then quaternion(frame.rotation) end
@@ -219,18 +218,18 @@ local function write_rope(self)
 end
 
 --- output a string of binary in the blitz 3d format
--- @function mtul.b3d_writer.write_string
--- @param self @{b3d_reader.BB3D|BB3D chunk}
+-- @function leef.b3d_writer.write_string
+-- @param self @{BB3D}
 -- @return string containing the binary file
-function mtul.b3d_writer.write_string(self)
+function leef.b3d_writer.write_string(self)
 	return table.concat(write_rope(self))
 end
 
 --- output in the blitz3d format file reference
--- @function mtul.b3d_writer.write_model_to_file
--- @param self @{b3d_reader.BB3D|BB3D chunk}
+-- @function leef.b3d_writer.write_model_to_file
+-- @param self @{BB3D}
 -- @param stream io file object to write to
-function mtul.b3d_writer.write_model_to_file(self, stream)
+function leef.b3d_writer.write_model_to_file(self, stream)
 	for _, str in ipairs(write_rope(self)) do
 		stream:write(str)
 	end

@@ -1,10 +1,10 @@
-# MTUL-b3d
+# LEEF-b3d
 a b3d library that use's [Appgurue's work](https://github.com/appgurueu/modlib), a b3d reader, and expands it's usefulness into node reading, global transformation solving,
-and more- mostly in one package. Online documentation can be found [here](https://minetest-unification-library.github.io/MTUL-b3d/).
+and more- mostly in one package. Online documentation can be found [here](https://minetest-unification-library.github.io/LEEF-b3d/).
 
 dependencies
-* MTUL-core: provides binary reading (potential rename)
-* MTUL-cpml: OPTIONAL allows use of b3d_nodes library (for node solving)
+* LEEF-core: provides binary reading (potential rename)
+* LEEF-math: OPTIONAL allows use of b3d_nodes library (for node solving)
 
 features:
 * read a b3d file
@@ -15,7 +15,7 @@ features:
 * solve the global transformation of a node (mat4)
 
 todo:
-* allow use of `get_node_by_name()` without CPML. (move to b3d_reader or set alias?)
+* allow use of `get_node_by_name()` without MATH. (move to b3d_reader or set alias?)
 * document b3d table contents (I already wrote most of the documentation in modlib's wiki...)
 * finish b3d writer (NOTE: must offset "frame" by +1 as the reader is modified to match irrlicht)
 
