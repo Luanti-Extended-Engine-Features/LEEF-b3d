@@ -93,8 +93,8 @@ end
 -- @function leef.b3d_nodes.get_node_global_transform
 -- @param node table, the node from within a b3d table to read (as outputed by `b3d_reader`).
 -- @param frame float, the frame to find the transform and rotation in.
--- @param outputs (optional) string, either "rotation" or "transform". Set to nil to return both.
--- @return `global_transform`, a matrix 4x4, note that MATH's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `leef_math` docs)
+-- @param outputs (optional) string, either "1" or "2" where 1 will output the transform alone and 2 will output the rotation alone. Set to nil to return both.
+-- @return `global_transform`, a matrix 4x4, note that leef.math's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `leef_math` docs)
 -- @return `rotation quat`, the quaternion rotation in global space. (cannot be assumed to be normalized, this uses raw interpolated data from the b3d reader)
 function b3d_nodes.get_node_global_transform(node, frame, outputs)
     local global_transform
@@ -103,7 +103,7 @@ function b3d_nodes.get_node_global_transform(node, frame, outputs)
         local pos_vec, rot_vec, scl_vec =  b3d_nodes.get_animated_local_trs(current_node, frame)
         rot_vec.w = -rot_vec.w --b3d rotates the opposite way around the axis (I guess)
         --find the transform
-        if not (outputs and outputs ~= "transform") then
+        if not (outputs and outputs ~= 1) then
             --rot_vec = {rot_vec[2], rot_vec[3], rot_vec[4], rot_vec[1]}
             local local_transform = mat4.identity()
             local_transform = local_transform:translate(local_transform, pos_vec)
@@ -123,7 +123,7 @@ function b3d_nodes.get_node_global_transform(node, frame, outputs)
 
         --find the rotation
 
-        if not (outputs and outputs ~= "rotation") then
+        if not (outputs and outputs ~= 2) then
             if not rotation then
                 rotation = rot_vec
             else
@@ -152,7 +152,7 @@ function b3d_nodes.get_node_global_position(self, node, is_bone, frame)
     if type(node) == "string" then
         node = b3d_nodes.get_node_by_name(self, node, is_bone)
     end
-    local transform = b3d_nodes.get_node_global_transform(node, frame, "transform")
+    local transform = b3d_nodes.get_node_global_transform(node, frame, 1)
     return transform[13], transform[14], transform[15]
 end
 --- find the global rotation of a node in model space.
@@ -169,7 +169,7 @@ function b3d_nodes.get_node_rotation(self, node, is_bone, frame)
     if type(node) == "string" then
         node = b3d_nodes.get_node_by_name(self, node, is_bone)
     end
-    local _, rotation = b3d_nodes.get_node_global_transform(node, frame, "rotation")
+    local _, rotation = b3d_nodes.get_node_global_transform(node, frame, 2)
     return rotation
 end
 return b3d_nodes
