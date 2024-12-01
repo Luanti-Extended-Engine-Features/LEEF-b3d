@@ -3,7 +3,7 @@ a b3d library that use's [Appgurue's work](https://github.com/appgurueu/modlib),
 and more- mostly in one package. Online documentation can be found [here](https://minetest-unification-library.github.io/LEEF-b3d/).
 
 dependencies
-* LEEF-core: provides binary reading (potential rename)
+* LEEF-filesystem: provides binary reading and media path tracking
 * LEEF-math: OPTIONAL allows use of b3d_nodes library (for node solving)
 
 features:
