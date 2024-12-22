@@ -1,6 +1,6 @@
 # LEEF-b3d
 a b3d library that use's [Appgurue's work](https://github.com/appgurueu/modlib), a b3d reader, and expands it's usefulness into node reading, global transformation solving,
-and more- mostly in one package. Online documentation can be found [here](https://minetest-unification-library.github.io/LEEF-b3d/).
+and more- mostly in one package. Online documentation can be found [here](https://luanti-extended-engine-features.github.io/documentation/).
 
 dependencies
 * LEEF-filesystem: provides binary reading and media path tracking
