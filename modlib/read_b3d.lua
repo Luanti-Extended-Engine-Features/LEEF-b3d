@@ -1,4 +1,7 @@
 --- parse .b3d files into a lua table.
+--
+-- This is apart of the [LEEF-b3d](https://github.com/Luanti-Extended-Engine-Features/LEEF-b3d) module
+--
 -- note: capitlization of name indicates a "chunk" defined by the blitz3d format (see b3d_specification.txt)
 --@module b3d_reader
 
@@ -20,7 +23,7 @@ end
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
 
 --- read b3d models by their name. This simplifies read_from_stream.
--- @function leef.b3d_reader.read_model
+-- @function read_model
 -- @param modelname string, the name of model you are trying to read.
 -- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
 -- @return b3d table (documentation needed!)
@@ -68,14 +71,24 @@ end
 -- @field 8 "KEYS" keyframes
 -- @table chunks
 
+--- table which specifies a keyframe. This is apart of the node chunk
+--@field position position relative to parent {x,y,z}
+--@field rotation quaternion rotation {x,y,z,w}
+--@field scale scale of the node {x,y,z}
+--@table keyframe
+
+--- node paths
+-- a list of nodes indexed by a hieracrchy of nodes i.e. "path.to.node"
+--@field (...) node
+--@table node_paths
+
 --- read directly from file
--- @function leef.b3d_reader.read_from_stream
--- @param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
--- @param ignore_chunks a list of @{chunks} to be ignored (documentation needed)
--- @return @{BB3D} (documentation needed!)
+--@function read_from_stream
+--@param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
+--@param ignore_chunks a list of @{chunks} to be ignored (documentation needed)
+--@return @{BB3D} (documentation needed!)
 function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
-
 	local ignored = {}
 	if ignore_chunks then
 		for i, v in pairs(ignore_chunks) do
@@ -160,10 +173,13 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local node_chunk_types = {
 
 	}
+	--- chunks
+	--@section chunks
 
 	local chunk
 	local chunks = {
 		TEXS = function()
+
 			local textures = {}
 			while content() do
 				local tex = {}
@@ -295,12 +311,8 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 			local bone = {
 				flags = flags
 			}
+			--see keyframe documentation
 			while content() do
-				--- table which specifies a keyframe
-				--@position position relative to parent {x,y,z}
-				--@rotation quaternion rotation {x,y,z,w}
-				--@scale = {x,y,z}
-				--@table keyframe
 				local frame = {}
 				--minetest uses a zero indexed frame system, so for consistency, we offset it by 1
 				frame.frame = int()-1
@@ -399,15 +411,15 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end)
 			return node
 		end,
-		--- b3d table
-		-- note: in the b3d writer the node_paths field is ignored
-		-- @field node_paths all of the nodes in the model @{b3d_nodes}
-		-- @field node a table containing the root @{NODE} of the model.
-		-- @field textures @{TEXS} texture information
-		-- @field brushes @{BRUS} material information
-		-- @field version `{major=float, minor=float}` this functionally means nothing, but it's version information.
-		-- @table BB3D
 		BB3D = function()
+			--- b3d table
+			-- note: in the b3d writer the node_paths field is ignored
+			-- @field node_paths all of the nodes in the model @{b3d_nodes}
+			-- @field node a table containing the root @{NODE} of the model.
+			-- @field textures TEXS texture information. TEXS not currently documented as not currently useful for minetest purposes
+			-- @field brushes BRUS material information. BRUS not currently documented as not currently useful for minetest purposes
+			-- @field version `{major=float, minor=float}` this functionally means nothing, but it's version information.
+			-- @table BB3D
 			local version = int()
 			local self = {
 				version = {
@@ -476,6 +488,7 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	end
 
 	local self = chunk{BB3D = true}
+	-- see node_paths documentation
 	self.node_paths = {}
 	self.excluded_chunks = ignore_chunks and table.copy(ignore_chunks) or {}
 	assert(self.node, "no root node - model improperly exported. If using blender, ensure all objects are selected before exporting.")
@@ -484,8 +497,3 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	--b3d metatable unimplemented
 	return setmetatable(self, leef._b3d_metatable or {})
 end
-
---- node paths
--- a list of nodes indexed by a hieracrchy of nodes i.e. "path.to.node"
--- @field (...) node
--- @table node_paths

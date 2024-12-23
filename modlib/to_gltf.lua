@@ -3,7 +3,7 @@
 --THIS FILE IS INACTIVE, VERY BROKEN
 
 
---possibly unreliable, appgurueu (creator) says:
+--appgurueu:
 -- B3D to glTF converter
 -- See https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
 --! Highly experimental; expect bugs!

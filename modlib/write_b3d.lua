@@ -1,4 +1,7 @@
---- writes b3d models in the same format as outputted by the b3d reader module
+--- writes b3d models in the same format as outputted by the b3d reader modul
+--
+-- This is apart of the [LEEF-b3d](https://github.com/Luanti-Extended-Engine-Features/LEEF-b3d) module
+--
 --@module b3d_writer
 
 
@@ -218,7 +221,7 @@ local function write_rope(self)
 end
 
 --- output a string of binary in the blitz 3d format
--- @function leef.b3d_writer.write_string
+-- @function write_string
 -- @param self @{BB3D}
 -- @return string containing the binary file
 function leef.b3d_writer.write_string(self)
@@ -226,7 +229,7 @@ function leef.b3d_writer.write_string(self)
 end
 
 --- output in the blitz3d format file reference
--- @function leef.b3d_writer.write_model_to_file
+-- @function write_model_to_file
 -- @param self @{BB3D}
 -- @param stream io file object to write to
 function leef.b3d_writer.write_model_to_file(self, stream)
