@@ -26,7 +26,7 @@ end
 -- @function read_model
 -- @param modelname string, the name of model you are trying to read.
 -- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
--- @return b3d table (documentation needed!)
+-- @return b3d table
 function leef.b3d_reader.read_model(modelname, node_only)
 	assert(modelname, "no modelname provided")
 	-- @todo remove core dependancy on
@@ -59,7 +59,7 @@ end
 --made originally by appgurueu
 -- See `b3d_specification.txt` as well as https://github.com/blitz-research/blitz3d/blob/master/blitz3d/loader_b3d.cpp
 
---- an unordered list of the following string chunks.
+--- an unordered list of chunks to be ignored.
 --- "NODE" and "BB3D" are ommitted as they are not allowed.
 -- @field 1 "TEXS" texture information
 -- @field 2 "BRUS" brushes (materials)
@@ -69,7 +69,7 @@ end
 -- @field 6 "BONE" node vertex weights
 -- @field 7 "ANIM" animation information
 -- @field 8 "KEYS" keyframes
--- @table chunks
+-- @table ignore_chunks
 
 --- table which specifies a keyframe. This is apart of the node chunk
 --@field position position relative to parent {x,y,z}
@@ -85,7 +85,7 @@ end
 --- read directly from file
 --@function read_from_stream
 --@param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
---@param ignore_chunks a list of @{chunks} to be ignored (documentation needed)
+--@param ignore_chunks a list in the format of @{ignore_chunks}
 --@return @{BB3D} (documentation needed!)
 function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
