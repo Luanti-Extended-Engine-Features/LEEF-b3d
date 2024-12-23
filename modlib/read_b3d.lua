@@ -2,7 +2,7 @@
 --
 -- This is apart of the [LEEF-b3d](https://github.com/Luanti-Extended-Engine-Features/LEEF-b3d) module
 --
--- note: capitlization of name indicates a "chunk" defined by the blitz3d format (see b3d_specification.txt)
+-- note: capitlization of name indicates a "chunk" defined by the blitz3d format (see [b3d_specification.txt](https://github.com/Luanti-Extended-Engine-Features/LEEF-b3d/blob/master/b3d_specification.txt))
 --@module b3d_reader
 
 local read_int, read_single = leef.binary.read_int, leef.binary.read_single
@@ -22,7 +22,7 @@ local function tbl_keys(table)
 end
 --reads a model directly (based on name). Note that "node_only" abstracts chunks not necessary to finding the position/transform of a bone/node.
 
---- read b3d models by their name. This simplifies read_from_stream.
+--- read b3d models by their name. This simplifies `read_from_stream`.
 -- @function read_model
 -- @param modelname string, the name of model you are trying to read.
 -- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
@@ -349,7 +349,7 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 			-- bone field which will contain IDs from it's parent node's mesh chunk.
 			-- @field name
 			-- @field type string which is either "pivot", "bone" or "mesh"
-			-- @field children a list of child nodes, Transoformations (position, rotation, scale) will be applied to the children.
+			-- @field children a list of child {nodes, Transformations (position, rotation, scale) will be applied to the children.
 			-- @field position position {x, y, z} of the bone
 			-- @field rotation quaternion {x, y, z, w} rotation of the bone at rest
 			-- @field scale {x, y, z} scale of the bone at rest
