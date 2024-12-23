@@ -26,7 +26,7 @@ end
 -- @function read_model
 -- @param modelname string, the name of model you are trying to read.
 -- @param node_only bool, specifies wether to ignore textures, meshes, or anything else. Use this if you're only trying to solve bone transforms.
--- @return b3d table
+-- @return @{BB3D}
 function leef.b3d_reader.read_model(modelname, node_only)
 	assert(modelname, "no modelname provided")
 	-- @todo remove core dependancy on
