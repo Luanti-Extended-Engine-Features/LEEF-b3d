@@ -222,7 +222,7 @@ end
 
 --- output a string of binary in the blitz 3d format
 -- @function write_string
--- @param self @{BB3D}
+-- @param self @{b3d_reader.BB3D|BB3D}
 -- @return string containing the binary file
 function leef.b3d_writer.write_string(self)
 	return table.concat(write_rope(self))
@@ -230,7 +230,7 @@ end
 
 --- output in the blitz3d format file reference
 -- @function write_model_to_file
--- @param self @{BB3D}
+-- @param self @{b3d_reader.BB3D|BB3D}
 -- @param stream io file object to write to
 function leef.b3d_writer.write_model_to_file(self, stream)
 	for _, str in ipairs(write_rope(self)) do

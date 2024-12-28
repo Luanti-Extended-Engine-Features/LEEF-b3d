@@ -291,11 +291,12 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end
 			return bone
 		end,
-		--- keyframes
-		--@field flags defines if position rotation and scale exists (further explanation needed)
-		--@field ... a list of @{keyframe}s
-		--@table KEYS a list of keyframes
 		KEYS = function()
+			--- keyframes.
+			-- a list of keyframes
+			-- @field flags defines if position rotation and scale exists (further explanation needed)
+			-- @field ... a list of @{keyframe}s
+			-- @table KEYS
 			local flags = int()
 			local _flags = flags % 8
 			local rotation, scale, position
@@ -329,12 +330,13 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 			end
 			return bone
 		end,
-		--- defines the animation of a model
-		--@field flags unused?
-		--@field frames number of frames
-		--@field fps framerate of the model
-		--@table ANIM
+
 		ANIM = function()
+			--- defines the animation of a model
+			--@field flags unused?
+			--@field frames number of frames
+			--@field fps framerate of the model
+			--@table ANIM
 			local ret = {}
 			ret.flags = int() -- flags are unused
 			ret.frames = int()
@@ -412,8 +414,8 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 			return node
 		end,
 		BB3D = function()
-			--- b3d table
-			-- note: in the b3d writer the node_paths field is ignored
+			--- b3d table structure outputted by the b3d reader.
+			-- Note: in the b3d writer the node_paths field is ignored
 			-- @field node_paths all of the nodes in the model @{b3d_nodes}
 			-- @field node a table containing the root @{NODE} of the model.
 			-- @field textures TEXS texture information. TEXS not currently documented as not currently useful for minetest purposes
@@ -468,7 +470,7 @@ function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	--luckily most of the ground work is layed out for us already.
 
 	--also, Fatal here: for the sake of my reputation (which is nonexistent), typically I wouldn't nest these functions
-	--because I am not a physcopath and or a german named Lars, but for the sake of consistency it has to happen.
+	--because I am not a physcopath and or a german named Lars, but for the sake of consistency I am doing it like this.
 	--(Not that its *always* a bad idea, but unless you're baking in parameters it's sort of useless and potentially wasteful)
 	local copy_path = leef.table and leef.table.shallow_copy or function(tbl)
 		local new_table = {}
