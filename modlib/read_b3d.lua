@@ -86,7 +86,7 @@ end
 --@function read_from_stream
 --@param stream the file object (from the io library) to read from. Make sure you open it as "rb" (read binary.)
 --@param ignore_chunks a list in the format of @{ignore_chunks}
---@return @{BB3D} (documentation needed!)
+--@return @{BB3D}
 function leef.b3d_reader.read_from_stream(stream, ignore_chunks)
 	local left = 8
 	local ignored = {}
