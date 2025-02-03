@@ -78,6 +78,7 @@ function b3d_nodes.get_animated_local_trs(node, target_frame)
         local ratio = (f1-target_frame)/(f1-f2) --find the interpolation ratio
         return
             interpolate(frame_before_tbl.position, frame_after_tbl.position, ratio),
+            --should probably be using an internal function so i don't have to make two extra quats. But whatever.
             quat.new(unpack(frame_before_tbl.rotation)):slerp(quat.new(unpack(frame_after_tbl.rotation)), ratio),
             interpolate(frame_before_tbl.scale, frame_after_tbl.scale, ratio)
     else
@@ -87,31 +88,40 @@ function b3d_nodes.get_animated_local_trs(node, target_frame)
             table.copy(frame_before_tbl.scale)
     end
 end
---param 3 (outputs) is either "rotation" or "transform"- determines what's calculated. You can use this if you dont want uncessary calculations. If nil outputs both
 
---- get a node's global mat4 transform and rotation.
+--- get a node's local mat4 transform relative to it's parent node, and it's rotation.
+-- @param node table, the node from within a b3d table to read (as outputed by `b3d_reader`).
+-- @param frame float, the frame to find the transform and rotation in.
+-- @param outputs (optional) string, either "1" or "2" where 1 will output the transform alone and 2 will output the rotation alone. Set to nil to return both.
+-- @return `local_transform`, a matrix 4x4, note that leef.math's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `leef_math` docs)
+-- @return `rotation`, the quaternion rotation in global space. (cannot be assumed to be normalized, this uses raw interpolated data from the b3d reader)
+function b3d_nodes.get_node_local_transform(node, frame, outputs)
+    local local_transform = mat4.identity()
+    local pos_vec, rotation, scl_vec =  b3d_nodes.get_animated_local_trs(node, frame)
+    rotation.w = -rotation.w
+    if not (outputs and outputs ~= 1) then
+        local_transform:translate(local_transform, pos_vec)
+        local_transform:scale(local_transform, {scl_vec[1], scl_vec[2], scl_vec[3]})
+        local_transform = local_transform*(mat4.from_quaternion(rotation:normalize())) --W has to be inverted
+        --for some reason the scaling has to be broken up, I can't be bothered to figure out why after the time I've spent trying.
+    end
+    return local_transform, rotation
+end
+
+--- get a node's global mat4 transform and quat rotation.
 -- @param node table, the node from within a b3d table to read (as outputed by `b3d_reader`).
 -- @param frame float, the frame to find the transform and rotation in.
 -- @param outputs (optional) string, either "1" or "2" where 1 will output the transform alone and 2 will output the rotation alone. Set to nil to return both.
 -- @return `global_transform`, a matrix 4x4, note that leef.math's tranforms are column major (i.e. 1st column is 1, 2, 3, 4). (see `leef_math` docs)
--- @return `rotation quat`, the quaternion rotation in global space. (cannot be assumed to be normalized, this uses raw interpolated data from the b3d reader)
+-- @return `rotation`, the quaternion rotation in global space. (cannot be assumed to be normalized, this uses raw interpolated data from the b3d reader)
 function b3d_nodes.get_node_global_transform(node, frame, outputs)
     local global_transform
-    local rotation
+    local global_rotation
     for i, current_node in pairs(node.path) do
-        local pos_vec, rot_vec, scl_vec =  b3d_nodes.get_animated_local_trs(current_node, frame)
-        rot_vec.w = -rot_vec.w --b3d rotates the opposite way around the axis (I guess)
+
+        local local_transform, local_rotation = b3d_nodes.get_node_local_transform(current_node, frame, outputs)
         --find the transform
         if not (outputs and outputs ~= 1) then
-            --rot_vec = {rot_vec[2], rot_vec[3], rot_vec[4], rot_vec[1]}
-            local local_transform = mat4.identity()
-            local_transform = local_transform:translate(local_transform, pos_vec)
-            local_transform = local_transform*(mat4.from_quaternion(rot_vec:normalize())) --W has to be inverted
-
-            --for some reason the scaling has to be broken up, I can't be bothered to figure out why after the time I've spent trying.
-            local identity = mat4.identity()
-            local_transform = local_transform*identity:scale(identity, {scl_vec[1], scl_vec[2], scl_vec[3]})
-
             --get new global trasnform with the local.
             if global_transform then
                 global_transform=global_transform*local_transform
@@ -123,14 +133,14 @@ function b3d_nodes.get_node_global_transform(node, frame, outputs)
         --find the rotation
 
         if not (outputs and outputs ~= 2) then
-            if not rotation then
-                rotation = rot_vec
+            if not global_rotation then
+                global_rotation = local_rotation
             else
-                rotation = rotation*rot_vec
+                global_rotation = global_rotation*local_rotation
             end
         end
     end
-    return global_transform, rotation
+    return global_transform, global_rotation
 end
 
 --Returns X, Y, Z. is_bone is optional, if "node" is the name of a node (and not the node table), parameter 1 (self) and parameter 3 (is_bone) is used to find it.
