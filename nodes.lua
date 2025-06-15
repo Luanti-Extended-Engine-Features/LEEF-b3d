@@ -179,4 +179,32 @@ function b3d_nodes.get_node_rotation(self, node, is_bone, frame)
     local _, rotation = b3d_nodes.get_node_global_transform(node, frame, 2)
     return rotation
 end
+
+local temp_mat4 = mat4.identity()
+--[[local function recursively_build_vectors(node, frame, parent_transform)
+    local sum
+    --cleanly get this global transform of this node.
+    local this_node_transform = mat4.multiply(temp_mat4, parent_transform*b3d_nodes.get_node_local_transform(node, frame, 1))
+    for i, v in pairs(node.children) do
+
+end]]
+
+--- find the global position of an animated vertex
+-- @param self b3d table
+-- @param node
+-- @param vertid
+-- @param frame
+-- @return `vector`
+function b3d_nodes.get_global_vertpos(self, node, vertid, frame)
+
+    local sum = {0,0,0}
+    local k, this_node
+    for i, child in pairs(node.children) do
+        if child.bone then
+
+        end
+    end
+    return sum.x, sum.y, sum.z
+end
+
 return b3d_nodes

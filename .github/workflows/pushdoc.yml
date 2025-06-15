@@ -1,0 +1,8 @@
+name: Force doc build to external repo
+
+on: push
+
+jobs:
+    emptycommit:
+        runs-on: ubuntu-latest
+        steps:
